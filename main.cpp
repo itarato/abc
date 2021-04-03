@@ -49,7 +49,8 @@ class App {
 
     string s{pressed_char};
     draw_text(SDL_Rect{0, 0, WIN_WIDTH / 3, WIN_HEIGHT}, s.c_str());
-    draw_image(SDL_Rect{WIN_WIDTH / 3 * 2, 0, WIN_WIDTH / 3, WIN_HEIGHT});
+    draw_image(SDL_Rect{WIN_WIDTH / 3 * 2, 0, WIN_WIDTH / 3, WIN_HEIGHT},
+               "images/a.jpg");
   }
 
   void present_scene() { SDL_RenderPresent(renderer); }
@@ -96,7 +97,7 @@ class App {
       exit(EXIT_FAILURE);
     }
 
-    font = TTF_OpenFont("Merriweather-Black.ttf", 600);
+    font = TTF_OpenFont("fonts/Merriweather-Black.ttf", 600);
     if (font == nullptr) {
       cerr << "Cannot open font\n";
       exit(EXIT_FAILURE);
@@ -138,8 +139,8 @@ class App {
     SDL_DestroyTexture(text);
   }
 
-  void draw_image(SDL_Rect rect) {
-    SDL_RWops *rwops = SDL_RWFromFile("images/a.jpg", "rb");
+  void draw_image(SDL_Rect rect, const char *image_name) {
+    SDL_RWops *rwops = SDL_RWFromFile(image_name, "rb");
     SDL_Surface *image_surface = IMG_LoadJPG_RW(rwops);
     if (image_surface == nullptr) {
       cerr << "Cannot load image\n";
