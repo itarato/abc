@@ -1,4 +1,5 @@
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
 #include <unistd.h>
 
@@ -32,6 +33,8 @@ class App {
         case SDL_KEYDOWN:
           if (scancode >= SDL_SCANCODE_A && scancode <= SDL_SCANCODE_Z) {
             pressed_char = 'A' - SDL_SCANCODE_A + scancode;
+          } else if (scancode == SDL_SCANCODE_ESCAPE) {
+            is_over = true;
           }
           break;
         default:
@@ -46,6 +49,7 @@ class App {
 
     string s{pressed_char};
     draw_text(SDL_Rect{0, 0, WIN_WIDTH / 3, WIN_HEIGHT}, s.c_str());
+    draw_image(SDL_Rect{WIN_WIDTH / 3 * 2, 0, WIN_WIDTH / 3, WIN_HEIGHT});
   }
 
   void present_scene() { SDL_RenderPresent(renderer); }
@@ -67,6 +71,12 @@ class App {
 
     if (TTF_Init() == -1) {
       cerr << "TTF_Init failed\n";
+      exit(EXIT_FAILURE);
+    }
+
+    int img_flags = IMG_INIT_JPG;
+    if ((IMG_Init(IMG_INIT_JPG) & img_flags) == 0) {
+      cerr << "IMG_Init failed\n";
       exit(EXIT_FAILURE);
     }
 
@@ -105,6 +115,10 @@ class App {
 
   void cleanup() {
     TTF_CloseFont(font);
+    TTF_Quit();
+
+    IMG_Quit();
+
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(win);
     SDL_Quit();
@@ -113,10 +127,28 @@ class App {
   void draw_text(SDL_Rect rect, const char *msg) {
     SDL_Color text_color{200, 0, 100};
     SDL_Surface *text_surface = TTF_RenderText_Solid(font, msg, text_color);
-    SDL_Texture *text = SDL_CreateTextureFromSurface(renderer, text_surface);
+    if (text_surface == nullptr) {
+      cerr << "Cannot render text\n";
+      exit(EXIT_FAILURE);
+    }
 
+    SDL_Texture *text = SDL_CreateTextureFromSurface(renderer, text_surface);
     SDL_RenderCopy(renderer, text, NULL, &rect);
     SDL_FreeSurface(text_surface);
+    SDL_DestroyTexture(text);
+  }
+
+  void draw_image(SDL_Rect rect) {
+    SDL_RWops *rwops = SDL_RWFromFile("images/a.jpg", "rb");
+    SDL_Surface *image_surface = IMG_LoadJPG_RW(rwops);
+    if (image_surface == nullptr) {
+      cerr << "Cannot load image\n";
+      exit(EXIT_FAILURE);
+    }
+
+    SDL_Texture *text = SDL_CreateTextureFromSurface(renderer, image_surface);
+    SDL_RenderCopy(renderer, text, NULL, &rect);
+    SDL_FreeSurface(image_surface);
     SDL_DestroyTexture(text);
   }
 };
