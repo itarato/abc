@@ -16,7 +16,7 @@
 #define SDL_COLOR_GREEN (SDL_Color{80, 240, 40})
 #define SDL_COLOR_RED (SDL_Color{240, 40, 40})
 #define LETTER_FIRST 'A'
-#define LETTER_LAST 'C'
+#define LETTER_LAST 'J'
 #define ABC_LEN (LETTER_LAST - LETTER_FIRST + 1)
 #define PANIC(s)        \
   {                     \
@@ -52,6 +52,10 @@ class App {
         case SDL_KEYDOWN:
           if (scancode >= SDL_SCANCODE_A && scancode <= SDL_SCANCODE_Z) {
             pressed_char = 'A' - SDL_SCANCODE_A + scancode;
+
+            if (pressed_char == answer_char) {
+              new_game();
+            }
           } else if (scancode == SDL_SCANCODE_ESCAPE) {
             is_over = true;
           }
