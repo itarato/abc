@@ -67,6 +67,39 @@ class SoundEffect {
   }
 };
 
+class Image {
+ protected:
+  virtual SDL_Surface *load_surface(SDL_RWops *rwops) = 0;
+
+  Image() : text(nullptr) {}
+
+ public:
+  SDL_Texture *text;
+
+  void init(SDL_Renderer *renderer, const char *file_name) {
+    SDL_RWops *rwops = SDL_RWFromFile(file_name, "rb");
+    SDL_Surface *surf = load_surface(rwops);
+    if (surf == nullptr) PANIC("Cannot load image");
+
+    text = SDL_CreateTextureFromSurface(renderer, surf);
+    SDL_FreeSurface(surf);
+  }
+
+  ~Image() {
+    if (text) SDL_DestroyTexture(text);
+  }
+};
+
+class JPGImage : public Image {
+ protected:
+  SDL_Surface *load_surface(SDL_RWops *rwops) { return IMG_LoadJPG_RW(rwops); }
+};
+
+class PNGImage : public Image {
+ protected:
+  SDL_Surface *load_surface(SDL_RWops *rwops) { return IMG_LoadPNG_RW(rwops); }
+};
+
 class App {
  private:
   SDL_Window *win;
@@ -75,7 +108,7 @@ class App {
   char pressed_char;
   char answer_char;
   SDL_Texture *animal_image_textures[ABC_LEN];
-  SDL_Texture *celebration_image_texture;
+  PNGImage *celebration_image;
   SoundEffect *victory_sound;
   int state;
 
@@ -131,7 +164,7 @@ class App {
 
     if (state == STATE_WON_GAME) {
       draw_image(SDL_Rect{0, 0, WIN_WIDTH, WIN_HEIGHT},
-                 celebration_image_texture);
+                 celebration_image->text);
 
       victory_sound->play();
     }
@@ -141,7 +174,7 @@ class App {
 
  public:
   App() : win(nullptr), renderer(nullptr), font(nullptr), state(STATE_NORMAL) {}
-  ~App() {}
+  ~App() { delete victory_sound; }
 
   void init() {
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) != 0) PANIC("SDL Init Error");
@@ -176,13 +209,8 @@ class App {
       SDL_FreeSurface(image_surface);
     }
 
-    SDL_RWops *rwops = SDL_RWFromFile("images/celebrate.png", "rb");
-    SDL_Surface *image_surface = IMG_LoadPNG_RW(rwops);
-    if (image_surface == nullptr) PANIC("Cannot load celebration image");
-
-    celebration_image_texture =
-        SDL_CreateTextureFromSurface(renderer, image_surface);
-    SDL_FreeSurface(image_surface);
+    celebration_image = new PNGImage;
+    celebration_image->init(renderer, "images/celebrate.png");
 
     victory_sound = new SoundEffect("sounds/victory.wav");
 
@@ -219,7 +247,6 @@ class App {
     for (int i = LETTER_FIRST; i <= LETTER_LAST; i++) {
       SDL_DestroyTexture(animal_image_textures[i - LETTER_FIRST]);
     }
-    SDL_DestroyTexture(celebration_image_texture);
 
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(win);
