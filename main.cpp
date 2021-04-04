@@ -22,7 +22,7 @@
 #define SDL_COLOR_RED (SDL_Color{240, 40, 40})
 
 #define LETTER_FIRST 'A'
-#define LETTER_LAST 'J'
+#define LETTER_LAST 'K'
 #define ABC_LEN (LETTER_LAST - LETTER_FIRST + 1)
 #define FONT_PADDING 64
 
