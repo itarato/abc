@@ -18,8 +18,11 @@
 #define LETTER_FIRST 'A'
 #define LETTER_LAST 'C'
 #define ABC_LEN (LETTER_LAST - LETTER_FIRST + 1)
-// #define PANIC {\
-// }
+#define PANIC(s)        \
+  {                     \
+    cerr << s << endl;  \
+    exit(EXIT_FAILURE); \
+  }
 
 using namespace std;
 
@@ -82,53 +85,31 @@ class App {
   ~App() {}
 
   void init() {
-    if (SDL_Init(SDL_INIT_VIDEO) != 0) {
-      std::cerr << "SDL Init Error\n";
-      exit(EXIT_FAILURE);
-    }
-
-    if (TTF_Init() == -1) {
-      cerr << "TTF_Init failed\n";
-      exit(EXIT_FAILURE);
-    }
+    if (SDL_Init(SDL_INIT_VIDEO) != 0) PANIC("SDL Init Error");
+    if (TTF_Init() == -1) PANIC("TTF_Init failed");
 
     int img_flags = IMG_INIT_JPG;
-    if ((IMG_Init(IMG_INIT_JPG) & img_flags) == 0) {
-      cerr << "IMG_Init failed\n";
-      exit(EXIT_FAILURE);
-    }
+    if ((IMG_Init(IMG_INIT_JPG) & img_flags) == 0) PANIC("IMG_Init failed");
 
     win = SDL_CreateWindow("Lennox University", SDL_WINDOWPOS_CENTERED,
                            SDL_WINDOWPOS_CENTERED, WIN_WIDTH, WIN_HEIGHT,
                            SDL_WIN_FLAGS);
 
-    if (win == nullptr) {
-      cerr << "Window creation error\n";
-      exit(EXIT_FAILURE);
-    }
+    if (win == nullptr) PANIC("Window creation error");
 
     renderer = SDL_CreateRenderer(win, -1, SDL_RENDER_FLAGS);
 
-    if (renderer == nullptr) {
-      cerr << "Renderer creation error\n";
-      exit(EXIT_FAILURE);
-    }
+    if (renderer == nullptr) PANIC("Renderer creation error");
 
     font = TTF_OpenFont("fonts/Merriweather-Black.ttf", 600);
-    if (font == nullptr) {
-      cerr << "Cannot open font\n";
-      exit(EXIT_FAILURE);
-    }
+    if (font == nullptr) PANIC("Cannot open font");
 
     for (int i = LETTER_FIRST; i <= LETTER_LAST; i++) {
       char image_name[32];
       sprintf(image_name, "images/%c.jpg", i);
       SDL_RWops *rwops = SDL_RWFromFile(image_name, "rb");
       SDL_Surface *image_surface = IMG_LoadJPG_RW(rwops);
-      if (image_surface == nullptr) {
-        cerr << "Cannot load image\n";
-        exit(EXIT_FAILURE);
-      }
+      if (image_surface == nullptr) PANIC("Cannot load image");
 
       image_textures[i - LETTER_FIRST] =
           SDL_CreateTextureFromSurface(renderer, image_surface);
@@ -170,10 +151,7 @@ class App {
 
   void draw_text(SDL_Rect rect, SDL_Color text_color, const char *msg) {
     SDL_Surface *text_surface = TTF_RenderText_Solid(font, msg, text_color);
-    if (text_surface == nullptr) {
-      cerr << "Cannot render text\n";
-      exit(EXIT_FAILURE);
-    }
+    if (text_surface == nullptr) PANIC("Cannot render text");
 
     SDL_Texture *text = SDL_CreateTextureFromSurface(renderer, text_surface);
     SDL_RenderCopy(renderer, text, NULL, &rect);
