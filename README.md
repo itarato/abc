@@ -22,3 +22,4 @@ make
 Special thanks for the open source media assets:
 - animal pictures: https://pixabay.com/
 - sounds: https://soundbible.com/
+- fonts: https://fonts.google.com/
