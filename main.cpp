@@ -20,6 +20,9 @@
 #define SDL_RENDER_FLAGS (SDL_RENDERER_ACCELERATED)
 #define SDL_COLOR_GREEN (SDL_Color{80, 240, 40})
 #define SDL_COLOR_RED (SDL_Color{240, 40, 40})
+#define SDL_COLOR_BLUE (SDL_Color{40, 80, 240})
+#define SDL_COLOR_WHITE (SDL_Color{240, 240, 240})
+#define SDL_COLOR_BLACK (SDL_Color{40, 40, 40})
 
 #define LETTER_FIRST 'A'
 #define LETTER_LAST 'Z'
@@ -31,6 +34,13 @@
     cerr << s << endl;  \
     exit(EXIT_FAILURE); \
   }
+
+static const char *names[] = {
+    "Antelope", "Bumble bee",   "Cat",     "Dog",     "Elephant", "Fox",
+    "Gorilla",  "Hippopotamus", "Iguana",  "Jaguar",  "Koala",    "Lemur",
+    "Meerkat",  "Nautilus",     "Ostrich", "Panther", "Quokka",   "Rabbit",
+    "Snake",    "Tapir",        "Urchin",  "Vulture", "Wolf",     "Xerus",
+    "Yak",      "Zebra"};
 
 using namespace std;
 
@@ -112,6 +122,7 @@ class App {
   char answer_char;
   JPGImage *animal_image_textures[ABC_LEN];
   PNGImage *celebration_image;
+  PNGImage *overlay_image;
   SoundEffect *victory_sound;
   int state;
 
@@ -148,22 +159,7 @@ class App {
     draw_image(SDL_Rect{0, 0, WIN_WIDTH / 3, WIN_HEIGHT},
                animal_image_textures[answer_char - LETTER_FIRST]->text);
 
-    SDL_Color pressed_color;
-    if (state == STATE_WON_GAME) {
-      pressed_color = SDL_COLOR_GREEN;
-    } else {
-      pressed_color = SDL_COLOR_RED;
-    }
-
-    string pressed_char_string{pressed_char};
-    draw_text(SDL_Rect{(WIN_WIDTH / 3) + FONT_PADDING, 0,
-                       (WIN_WIDTH / 3) - (FONT_PADDING << 1), WIN_HEIGHT},
-              pressed_color, pressed_char_string.c_str());
-
-    string answer_char_string{answer_char};
-    draw_text(SDL_Rect{(WIN_WIDTH / 3 * 2) + FONT_PADDING, 0,
-                       (WIN_WIDTH / 3) - (FONT_PADDING << 1), WIN_HEIGHT},
-              SDL_COLOR_GREEN, answer_char_string.c_str());
+    draw_image(SDL_Rect{0, 0, WIN_WIDTH, WIN_HEIGHT}, overlay_image->text);
 
     if (state == STATE_WON_GAME) {
       draw_image(SDL_Rect{0, 0, WIN_WIDTH, WIN_HEIGHT},
@@ -171,6 +167,28 @@ class App {
 
       victory_sound->play();
     }
+
+    SDL_Color text_color;
+    if (state == STATE_WON_GAME) {
+      text_color = SDL_COLOR_GREEN;
+    } else {
+      text_color = SDL_COLOR_WHITE;
+    }
+
+    string pressed_char_string{pressed_char};
+    draw_text(SDL_Rect{WIN_WIDTH - 96, 32, 64, 64}, SDL_COLOR_WHITE,
+              pressed_char_string.c_str());
+
+    string answer_char_string{answer_char};
+    draw_text(SDL_Rect{(int)(WIN_WIDTH / 3 * 1.5) + FONT_PADDING, -FONT_PADDING,
+                       (WIN_WIDTH / 3) - (FONT_PADDING << 1),
+                       WIN_HEIGHT - FONT_PADDING},
+              text_color, answer_char_string.c_str());
+
+    int name_len = strlen(names[answer_char - 'A']);
+    draw_text(SDL_Rect{(int)(WIN_WIDTH / 3 * 2) - (name_len * 32),
+                       WIN_HEIGHT - 96, name_len * 64, 64},
+              SDL_COLOR_BLACK, names[answer_char - 'A']);
   }
 
   void present_scene() { SDL_RenderPresent(renderer); }
@@ -184,6 +202,7 @@ class App {
       delete animal_image_textures[i - LETTER_FIRST];
     }
     delete celebration_image;
+    delete overlay_image;
   }
 
   void init() {
@@ -217,6 +236,9 @@ class App {
 
     celebration_image = new PNGImage;
     celebration_image->init(renderer, "images/celebrate.png");
+
+    overlay_image = new PNGImage;
+    overlay_image->init(renderer, "images/overlay.png");
 
     victory_sound = new SoundEffect("sounds/victory.wav");
 
@@ -259,8 +281,15 @@ class App {
     SDL_Surface *text_surface = TTF_RenderText_Solid(font, msg, text_color);
     if (text_surface == nullptr) PANIC("Cannot render text");
 
+    int optimal_w;
+    int optimal_h;
+    if (TTF_SizeText(font, msg, &optimal_w, &optimal_h) == -1)
+      PANIC("Cannot check text size");
+
     SDL_Texture *text = SDL_CreateTextureFromSurface(renderer, text_surface);
-    SDL_RenderCopy(renderer, text, NULL, &rect);
+    SDL_Rect final_rect{rect.x, rect.y, (int)((rect.h * optimal_w) / optimal_h),
+                        rect.h};
+    SDL_RenderCopy(renderer, text, NULL, &final_rect);
     SDL_FreeSurface(text_surface);
     SDL_DestroyTexture(text);
   }
