@@ -1,6 +1,9 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 #include <unistd.h>
 
 #include <iostream>
@@ -10,8 +13,19 @@
 #define WIN_HEIGHT 600
 #define SDL_WIN_FLAGS 0
 #define SDL_RENDER_FLAGS (SDL_RENDERER_ACCELERATED)
+#define SDL_COLOR_GREEN (SDL_Color{80, 240, 40})
+#define SDL_COLOR_RED (SDL_Color{240, 40, 40})
+#define LETTER_FIRST 'A'
+#define LETTER_LAST 'C'
+#define ABC_LEN (LETTER_LAST - LETTER_FIRST + 1)
+// #define PANIC {\
+// }
 
 using namespace std;
+
+char rand_char() {
+  return LETTER_FIRST + rand() % (LETTER_LAST - LETTER_FIRST + 1);
+}
 
 class App {
  private:
@@ -20,6 +34,8 @@ class App {
   SDL_Renderer *renderer;
   TTF_Font *font;
   char pressed_char;
+  char answer_char;
+  SDL_Texture *image_textures[ABC_LEN];
 
   void handle_input() {
     SDL_Event e;
@@ -47,21 +63,22 @@ class App {
     SDL_SetRenderDrawColor(renderer, 42, 42, 42, 255);
     SDL_RenderClear(renderer);
 
-    string s{pressed_char};
-    draw_text(SDL_Rect{0, 0, WIN_WIDTH / 3, WIN_HEIGHT}, s.c_str());
-    draw_image(SDL_Rect{WIN_WIDTH / 3 * 2, 0, WIN_WIDTH / 3, WIN_HEIGHT},
-               "images/a.jpg");
+    draw_image(SDL_Rect{0, 0, WIN_WIDTH / 3, WIN_HEIGHT},
+               answer_char - LETTER_FIRST);
+
+    string pressed_char_string{pressed_char};
+    draw_text(SDL_Rect{WIN_WIDTH / 3, 0, WIN_WIDTH / 3, WIN_HEIGHT},
+              SDL_COLOR_RED, pressed_char_string.c_str());
+
+    string answer_char_string{answer_char};
+    draw_text(SDL_Rect{WIN_WIDTH / 3 * 2, 0, WIN_WIDTH / 3, WIN_HEIGHT},
+              SDL_COLOR_GREEN, answer_char_string.c_str());
   }
 
   void present_scene() { SDL_RenderPresent(renderer); }
 
  public:
-  App()
-      : is_over(false),
-        win(nullptr),
-        renderer(nullptr),
-        font(nullptr),
-        pressed_char(' ') {}
+  App() : is_over(false), win(nullptr), renderer(nullptr), font(nullptr) {}
   ~App() {}
 
   void init() {
@@ -102,6 +119,28 @@ class App {
       cerr << "Cannot open font\n";
       exit(EXIT_FAILURE);
     }
+
+    for (int i = LETTER_FIRST; i <= LETTER_LAST; i++) {
+      char image_name[32];
+      sprintf(image_name, "images/%c.jpg", i);
+      SDL_RWops *rwops = SDL_RWFromFile(image_name, "rb");
+      SDL_Surface *image_surface = IMG_LoadJPG_RW(rwops);
+      if (image_surface == nullptr) {
+        cerr << "Cannot load image\n";
+        exit(EXIT_FAILURE);
+      }
+
+      image_textures[i - LETTER_FIRST] =
+          SDL_CreateTextureFromSurface(renderer, image_surface);
+      SDL_FreeSurface(image_surface);
+    }
+
+    new_game();
+  }
+
+  void new_game() {
+    pressed_char = ' ';
+    answer_char = rand_char();
   }
 
   void run() {
@@ -120,13 +159,16 @@ class App {
 
     IMG_Quit();
 
+    for (int i = LETTER_FIRST; i <= LETTER_LAST; i++) {
+      SDL_DestroyTexture(image_textures[i - LETTER_FIRST]);
+    }
+
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(win);
     SDL_Quit();
   }
 
-  void draw_text(SDL_Rect rect, const char *msg) {
-    SDL_Color text_color{200, 0, 100};
+  void draw_text(SDL_Rect rect, SDL_Color text_color, const char *msg) {
     SDL_Surface *text_surface = TTF_RenderText_Solid(font, msg, text_color);
     if (text_surface == nullptr) {
       cerr << "Cannot render text\n";
@@ -139,18 +181,8 @@ class App {
     SDL_DestroyTexture(text);
   }
 
-  void draw_image(SDL_Rect rect, const char *image_name) {
-    SDL_RWops *rwops = SDL_RWFromFile(image_name, "rb");
-    SDL_Surface *image_surface = IMG_LoadJPG_RW(rwops);
-    if (image_surface == nullptr) {
-      cerr << "Cannot load image\n";
-      exit(EXIT_FAILURE);
-    }
-
-    SDL_Texture *text = SDL_CreateTextureFromSurface(renderer, image_surface);
-    SDL_RenderCopy(renderer, text, NULL, &rect);
-    SDL_FreeSurface(image_surface);
-    SDL_DestroyTexture(text);
+  void draw_image(SDL_Rect rect, int i) {
+    SDL_RenderCopy(renderer, image_textures[i], NULL, &rect);
   }
 };
 
@@ -159,6 +191,8 @@ App app;
 void cleanup() { app.cleanup(); }
 
 int main() {
+  srand(time(NULL));
+
   app.init();
   app.run();
 
