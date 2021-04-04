@@ -176,19 +176,18 @@ class App {
     }
 
     string pressed_char_string{pressed_char};
-    draw_text(SDL_Rect{WIN_WIDTH - 96, 32, 64, 64}, SDL_COLOR_WHITE,
+    draw_text(SDL_Point{WIN_WIDTH - 128, 0}, 128, SDL_COLOR_WHITE,
               pressed_char_string.c_str());
 
     string answer_char_string{answer_char};
-    draw_text(SDL_Rect{(int)(WIN_WIDTH / 3 * 1.5) + FONT_PADDING, -FONT_PADDING,
-                       (WIN_WIDTH / 3) - (FONT_PADDING << 1),
-                       WIN_HEIGHT - FONT_PADDING},
-              text_color, answer_char_string.c_str());
+    draw_text(
+        SDL_Point{(int)(WIN_WIDTH / 3 * 1.5) + FONT_PADDING, -FONT_PADDING},
+        WIN_HEIGHT - FONT_PADDING, text_color, answer_char_string.c_str());
 
     int name_len = strlen(names[answer_char - 'A']);
-    draw_text(SDL_Rect{(int)(WIN_WIDTH / 3 * 2) - (name_len * 32),
-                       WIN_HEIGHT - 96, name_len * 64, 64},
-              SDL_COLOR_BLACK, names[answer_char - 'A']);
+    draw_text(
+        SDL_Point{(int)(WIN_WIDTH / 3 * 2) - (name_len * 32), WIN_HEIGHT - 96},
+        64, SDL_COLOR_BLACK, names[answer_char - 'A']);
   }
 
   void present_scene() { SDL_RenderPresent(renderer); }
@@ -277,7 +276,8 @@ class App {
     SDL_Quit();
   }
 
-  void draw_text(SDL_Rect rect, SDL_Color text_color, const char *msg) {
+  void draw_text(SDL_Point pos, int height, SDL_Color text_color,
+                 const char *msg) {
     SDL_Surface *text_surface = TTF_RenderText_Solid(font, msg, text_color);
     if (text_surface == nullptr) PANIC("Cannot render text");
 
@@ -287,8 +287,8 @@ class App {
       PANIC("Cannot check text size");
 
     SDL_Texture *text = SDL_CreateTextureFromSurface(renderer, text_surface);
-    SDL_Rect final_rect{rect.x, rect.y, (int)((rect.h * optimal_w) / optimal_h),
-                        rect.h};
+    SDL_Rect final_rect{pos.x, pos.y, (int)((height * optimal_w) / optimal_h),
+                        height};
     SDL_RenderCopy(renderer, text, NULL, &final_rect);
     SDL_FreeSurface(text_surface);
     SDL_DestroyTexture(text);
