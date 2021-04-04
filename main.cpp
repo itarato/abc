@@ -24,6 +24,7 @@
 #define LETTER_FIRST 'A'
 #define LETTER_LAST 'J'
 #define ABC_LEN (LETTER_LAST - LETTER_FIRST + 1)
+#define FONT_PADDING 64
 
 #define PANIC(s)        \
   {                     \
@@ -37,6 +38,35 @@ char rand_char() {
   return LETTER_FIRST + rand() % (LETTER_LAST - LETTER_FIRST + 1);
 }
 
+class SoundEffect {
+ private:
+  SDL_AudioSpec wav_spec;
+  Uint32 wav_length;
+  Uint8 *wav_buffer;
+  SDL_AudioDeviceID deviceId;
+
+ public:
+  SoundEffect(const char *effect_file_name) {
+    if (!SDL_LoadWAV(effect_file_name, &wav_spec, &wav_buffer, &wav_length))
+      PANIC("Cannot load wav");
+
+    deviceId = SDL_OpenAudioDevice(NULL, 0, &wav_spec, NULL, 0);
+    if (!deviceId) PANIC("Cannot open audio device");
+  }
+
+  ~SoundEffect() {
+    SDL_CloseAudioDevice(deviceId);
+    SDL_FreeWAV(wav_buffer);
+  }
+
+  void play() {
+    if (SDL_QueueAudio(deviceId, wav_buffer, wav_length) == -1)
+      PANIC("Cannot queue audio");
+
+    SDL_PauseAudioDevice(deviceId, 0);
+  }
+};
+
 class App {
  private:
   SDL_Window *win;
@@ -45,6 +75,8 @@ class App {
   char pressed_char;
   char answer_char;
   SDL_Texture *animal_image_textures[ABC_LEN];
+  SDL_Texture *celebration_image_texture;
+  SoundEffect *victory_sound;
   int state;
 
   void handle_input() {
@@ -78,7 +110,7 @@ class App {
     SDL_RenderClear(renderer);
 
     draw_image(SDL_Rect{0, 0, WIN_WIDTH / 3, WIN_HEIGHT},
-               answer_char - LETTER_FIRST);
+               animal_image_textures[answer_char - LETTER_FIRST]);
 
     SDL_Color pressed_color;
     if (state == STATE_WON_GAME) {
@@ -88,12 +120,21 @@ class App {
     }
 
     string pressed_char_string{pressed_char};
-    draw_text(SDL_Rect{WIN_WIDTH / 3, 0, WIN_WIDTH / 3, WIN_HEIGHT},
+    draw_text(SDL_Rect{(WIN_WIDTH / 3) + FONT_PADDING, 0,
+                       (WIN_WIDTH / 3) - (FONT_PADDING << 1), WIN_HEIGHT},
               pressed_color, pressed_char_string.c_str());
 
     string answer_char_string{answer_char};
-    draw_text(SDL_Rect{WIN_WIDTH / 3 * 2, 0, WIN_WIDTH / 3, WIN_HEIGHT},
+    draw_text(SDL_Rect{(WIN_WIDTH / 3 * 2) + FONT_PADDING, 0,
+                       (WIN_WIDTH / 3) - (FONT_PADDING << 1), WIN_HEIGHT},
               SDL_COLOR_GREEN, answer_char_string.c_str());
+
+    if (state == STATE_WON_GAME) {
+      draw_image(SDL_Rect{0, 0, WIN_WIDTH, WIN_HEIGHT},
+                 celebration_image_texture);
+
+      victory_sound->play();
+    }
   }
 
   void present_scene() { SDL_RenderPresent(renderer); }
@@ -103,11 +144,12 @@ class App {
   ~App() {}
 
   void init() {
-    if (SDL_Init(SDL_INIT_VIDEO) != 0) PANIC("SDL Init Error");
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) != 0) PANIC("SDL Init Error");
     if (TTF_Init() == -1) PANIC("TTF_Init failed");
 
-    int img_flags = IMG_INIT_JPG;
-    if ((IMG_Init(IMG_INIT_JPG) & img_flags) == 0) PANIC("IMG_Init failed");
+    int img_flags = IMG_INIT_JPG | IMG_INIT_PNG;
+    if ((IMG_Init(img_flags) & img_flags) != img_flags)
+      PANIC("IMG_Init failed");
 
     win = SDL_CreateWindow("Lennox University", SDL_WINDOWPOS_CENTERED,
                            SDL_WINDOWPOS_CENTERED, WIN_WIDTH, WIN_HEIGHT,
@@ -119,7 +161,7 @@ class App {
 
     if (renderer == nullptr) PANIC("Renderer creation error");
 
-    font = TTF_OpenFont("fonts/Merriweather-Black.ttf", 600);
+    font = TTF_OpenFont("fonts/Ubuntu-Bold.ttf", 600);
     if (font == nullptr) PANIC("Cannot open font");
 
     for (int i = LETTER_FIRST; i <= LETTER_LAST; i++) {
@@ -127,12 +169,22 @@ class App {
       sprintf(image_name, "images/%c.jpg", i);
       SDL_RWops *rwops = SDL_RWFromFile(image_name, "rb");
       SDL_Surface *image_surface = IMG_LoadJPG_RW(rwops);
-      if (image_surface == nullptr) PANIC("Cannot load image");
+      if (image_surface == nullptr) PANIC("Cannot load animal image");
 
       animal_image_textures[i - LETTER_FIRST] =
           SDL_CreateTextureFromSurface(renderer, image_surface);
       SDL_FreeSurface(image_surface);
     }
+
+    SDL_RWops *rwops = SDL_RWFromFile("images/celebrate.png", "rb");
+    SDL_Surface *image_surface = IMG_LoadPNG_RW(rwops);
+    if (image_surface == nullptr) PANIC("Cannot load celebration image");
+
+    celebration_image_texture =
+        SDL_CreateTextureFromSurface(renderer, image_surface);
+    SDL_FreeSurface(image_surface);
+
+    victory_sound = new SoundEffect("sounds/victory.wav");
 
     new_game();
   }
@@ -167,6 +219,7 @@ class App {
     for (int i = LETTER_FIRST; i <= LETTER_LAST; i++) {
       SDL_DestroyTexture(animal_image_textures[i - LETTER_FIRST]);
     }
+    SDL_DestroyTexture(celebration_image_texture);
 
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(win);
@@ -183,8 +236,8 @@ class App {
     SDL_DestroyTexture(text);
   }
 
-  void draw_image(SDL_Rect rect, int i) {
-    SDL_RenderCopy(renderer, animal_image_textures[i], NULL, &rect);
+  void draw_image(SDL_Rect rect, SDL_Texture *text) {
+    SDL_RenderCopy(renderer, text, NULL, &rect);
   }
 };
 
