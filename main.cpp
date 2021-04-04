@@ -9,15 +9,22 @@
 #include <iostream>
 #include <string>
 
+#define STATE_NORMAL 0
+#define STATE_EXIT 1
+#define STATE_WON_GAME 2
+
 #define WIN_WIDTH 1800
 #define WIN_HEIGHT 600
+
 #define SDL_WIN_FLAGS 0
 #define SDL_RENDER_FLAGS (SDL_RENDERER_ACCELERATED)
 #define SDL_COLOR_GREEN (SDL_Color{80, 240, 40})
 #define SDL_COLOR_RED (SDL_Color{240, 40, 40})
+
 #define LETTER_FIRST 'A'
 #define LETTER_LAST 'J'
 #define ABC_LEN (LETTER_LAST - LETTER_FIRST + 1)
+
 #define PANIC(s)        \
   {                     \
     cerr << s << endl;  \
@@ -32,13 +39,13 @@ char rand_char() {
 
 class App {
  private:
-  bool is_over;
   SDL_Window *win;
   SDL_Renderer *renderer;
   TTF_Font *font;
   char pressed_char;
   char answer_char;
-  SDL_Texture *image_textures[ABC_LEN];
+  SDL_Texture *animal_image_textures[ABC_LEN];
+  int state;
 
   void handle_input() {
     SDL_Event e;
@@ -47,17 +54,17 @@ class App {
 
       switch (e.type) {
         case SDL_QUIT:
-          is_over = true;
+          state = STATE_EXIT;
           break;
         case SDL_KEYDOWN:
           if (scancode >= SDL_SCANCODE_A && scancode <= SDL_SCANCODE_Z) {
             pressed_char = 'A' - SDL_SCANCODE_A + scancode;
 
             if (pressed_char == answer_char) {
-              new_game();
+              state = STATE_WON_GAME;
             }
           } else if (scancode == SDL_SCANCODE_ESCAPE) {
-            is_over = true;
+            state = STATE_EXIT;
           }
           break;
         default:
@@ -73,9 +80,16 @@ class App {
     draw_image(SDL_Rect{0, 0, WIN_WIDTH / 3, WIN_HEIGHT},
                answer_char - LETTER_FIRST);
 
+    SDL_Color pressed_color;
+    if (state == STATE_WON_GAME) {
+      pressed_color = SDL_COLOR_GREEN;
+    } else {
+      pressed_color = SDL_COLOR_RED;
+    }
+
     string pressed_char_string{pressed_char};
     draw_text(SDL_Rect{WIN_WIDTH / 3, 0, WIN_WIDTH / 3, WIN_HEIGHT},
-              SDL_COLOR_RED, pressed_char_string.c_str());
+              pressed_color, pressed_char_string.c_str());
 
     string answer_char_string{answer_char};
     draw_text(SDL_Rect{WIN_WIDTH / 3 * 2, 0, WIN_WIDTH / 3, WIN_HEIGHT},
@@ -85,7 +99,7 @@ class App {
   void present_scene() { SDL_RenderPresent(renderer); }
 
  public:
-  App() : is_over(false), win(nullptr), renderer(nullptr), font(nullptr) {}
+  App() : win(nullptr), renderer(nullptr), font(nullptr), state(STATE_NORMAL) {}
   ~App() {}
 
   void init() {
@@ -115,7 +129,7 @@ class App {
       SDL_Surface *image_surface = IMG_LoadJPG_RW(rwops);
       if (image_surface == nullptr) PANIC("Cannot load image");
 
-      image_textures[i - LETTER_FIRST] =
+      animal_image_textures[i - LETTER_FIRST] =
           SDL_CreateTextureFromSurface(renderer, image_surface);
       SDL_FreeSurface(image_surface);
     }
@@ -126,13 +140,19 @@ class App {
   void new_game() {
     pressed_char = ' ';
     answer_char = rand_char();
+    state = STATE_NORMAL;
   }
 
   void run() {
-    while (!is_over) {
-      prepare_scene();
+    while (state != STATE_EXIT) {
       handle_input();
+      prepare_scene();
       present_scene();
+
+      if (state == STATE_WON_GAME) {
+        new_game();
+        SDL_Delay(3000);
+      }
 
       SDL_Delay(16);
     }
@@ -145,7 +165,7 @@ class App {
     IMG_Quit();
 
     for (int i = LETTER_FIRST; i <= LETTER_LAST; i++) {
-      SDL_DestroyTexture(image_textures[i - LETTER_FIRST]);
+      SDL_DestroyTexture(animal_image_textures[i - LETTER_FIRST]);
     }
 
     SDL_DestroyRenderer(renderer);
@@ -164,7 +184,7 @@ class App {
   }
 
   void draw_image(SDL_Rect rect, int i) {
-    SDL_RenderCopy(renderer, image_textures[i], NULL, &rect);
+    SDL_RenderCopy(renderer, animal_image_textures[i], NULL, &rect);
   }
 };
 
