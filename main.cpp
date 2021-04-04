@@ -90,12 +90,12 @@ class Image {
   }
 };
 
-class JPGImage : public Image {
+class JPGImage final : public Image {
  protected:
   SDL_Surface *load_surface(SDL_RWops *rwops) { return IMG_LoadJPG_RW(rwops); }
 };
 
-class PNGImage : public Image {
+class PNGImage final : public Image {
  protected:
   SDL_Surface *load_surface(SDL_RWops *rwops) { return IMG_LoadPNG_RW(rwops); }
 };
@@ -107,7 +107,7 @@ class App {
   TTF_Font *font;
   char pressed_char;
   char answer_char;
-  SDL_Texture *animal_image_textures[ABC_LEN];
+  JPGImage *animal_image_textures[ABC_LEN];
   PNGImage *celebration_image;
   SoundEffect *victory_sound;
   int state;
@@ -143,7 +143,7 @@ class App {
     SDL_RenderClear(renderer);
 
     draw_image(SDL_Rect{0, 0, WIN_WIDTH / 3, WIN_HEIGHT},
-               animal_image_textures[answer_char - LETTER_FIRST]);
+               animal_image_textures[answer_char - LETTER_FIRST]->text);
 
     SDL_Color pressed_color;
     if (state == STATE_WON_GAME) {
@@ -174,7 +174,14 @@ class App {
 
  public:
   App() : win(nullptr), renderer(nullptr), font(nullptr), state(STATE_NORMAL) {}
-  ~App() { delete victory_sound; }
+  ~App() {
+    delete victory_sound;
+
+    for (int i = LETTER_FIRST; i <= LETTER_LAST; i++) {
+      delete animal_image_textures[i - LETTER_FIRST];
+    }
+    delete celebration_image;
+  }
 
   void init() {
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) != 0) PANIC("SDL Init Error");
@@ -200,13 +207,9 @@ class App {
     for (int i = LETTER_FIRST; i <= LETTER_LAST; i++) {
       char image_name[32];
       sprintf(image_name, "images/%c.jpg", i);
-      SDL_RWops *rwops = SDL_RWFromFile(image_name, "rb");
-      SDL_Surface *image_surface = IMG_LoadJPG_RW(rwops);
-      if (image_surface == nullptr) PANIC("Cannot load animal image");
 
-      animal_image_textures[i - LETTER_FIRST] =
-          SDL_CreateTextureFromSurface(renderer, image_surface);
-      SDL_FreeSurface(image_surface);
+      animal_image_textures[i - LETTER_FIRST] = new JPGImage;
+      animal_image_textures[i - LETTER_FIRST]->init(renderer, image_name);
     }
 
     celebration_image = new PNGImage;
@@ -243,10 +246,6 @@ class App {
     TTF_Quit();
 
     IMG_Quit();
-
-    for (int i = LETTER_FIRST; i <= LETTER_LAST; i++) {
-      SDL_DestroyTexture(animal_image_textures[i - LETTER_FIRST]);
-    }
 
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(win);
