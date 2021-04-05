@@ -20,8 +20,6 @@ void App::handle_input() {
           if (pressed_char == answer_char) {
             state = STATE_WON_GAME;
           }
-        } else if (scancode == SDL_SCANCODE_ESCAPE) {
-          exit_next_frame();
         }
         break;
       default:
@@ -82,6 +80,8 @@ App::App()
       state(STATE_NORMAL) {}
 
 App::~App() {
+  Engine::~Engine();
+
   delete victory_sound;
 
   for (int i = LETTER_FIRST; i <= LETTER_LAST; i++) {

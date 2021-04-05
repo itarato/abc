@@ -4,6 +4,9 @@
 
 #include "util.h"
 
+#define SDL_WIN_FLAGS 0
+#define SDL_RENDER_FLAGS (SDL_RENDERER_ACCELERATED)
+
 void Engine::draw_stage() { SDL_RenderPresent(renderer); }
 
 Engine::Engine(const char *title, const char *font_path, SDL_Point win_size)
