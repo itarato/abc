@@ -6,16 +6,11 @@
 #include "sound.h"
 #include "util.h"
 
-App app;
-
-void cleanup() { app.cleanup(); }
-
 int main() {
   srand(time(NULL));
 
+  App app;
   app.init();
-  atexit(cleanup);
-
   app.run();
 
   exit(EXIT_SUCCESS);

@@ -4,7 +4,7 @@
 
 #include "util.h"
 
-#define SDL_WIN_FLAGS 0
+#define SDL_WIN_FLAGS SDL_WINDOW_OPENGL
 #define SDL_RENDER_FLAGS (SDL_RENDERER_ACCELERATED)
 
 void Engine::draw_stage() { SDL_RenderPresent(renderer); }
@@ -18,7 +18,16 @@ Engine::Engine(const char *title, const char *font_path, SDL_Point win_size)
       font_path(font_path),
       win_size(win_size) {}
 
-Engine::~Engine() {}
+Engine::~Engine() {
+  TTF_CloseFont(font);
+  TTF_Quit();
+
+  IMG_Quit();
+
+  SDL_DestroyRenderer(renderer);
+  SDL_DestroyWindow(win);
+  SDL_Quit();
+}
 
 void Engine::init() {
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) != 0) PANIC("SDL Init Error");
@@ -47,17 +56,6 @@ void Engine::run() {
     prepare_stage();
     draw_stage();
   }
-}
-
-void Engine::cleanup() {
-  TTF_CloseFont(font);
-  TTF_Quit();
-
-  IMG_Quit();
-
-  SDL_DestroyRenderer(renderer);
-  SDL_DestroyWindow(win);
-  SDL_Quit();
 }
 
 void Engine::draw_text(SDL_Point pos, int height, int align,

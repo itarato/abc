@@ -80,8 +80,6 @@ App::App()
       state(STATE_NORMAL) {}
 
 App::~App() {
-  Engine::~Engine();
-
   delete victory_sound;
 
   for (int i = LETTER_FIRST; i <= LETTER_LAST; i++) {
@@ -89,6 +87,8 @@ App::~App() {
   }
   delete celebration_image;
   delete overlay_image;
+
+  Engine::~Engine();
 }
 
 void App::init() {
@@ -117,15 +117,4 @@ void App::new_game() {
   pressed_char = ' ';
   answer_char = rand_char();
   state = STATE_NORMAL;
-}
-
-void App::cleanup() {
-  TTF_CloseFont(font);
-  TTF_Quit();
-
-  IMG_Quit();
-
-  SDL_DestroyRenderer(renderer);
-  SDL_DestroyWindow(win);
-  SDL_Quit();
 }

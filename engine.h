@@ -31,7 +31,6 @@ class Engine {
   virtual ~Engine();
   virtual void init();
   void run();
-  virtual void cleanup();
   void draw_text(SDL_Point pos, int height, int align, SDL_Color text_color,
                  const char *msg);
   void draw_image(SDL_Point pos, Image *image);
