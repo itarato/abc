@@ -1,5 +1,5 @@
-#ifndef ENGINE_H
-#define ENGINE_H
+#ifndef ENGINE_ENGINE_H
+#define ENGINE_ENGINE_H
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>

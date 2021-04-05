@@ -4,9 +4,9 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 
-#include "engine.h"
-#include "image.h"
-#include "sound.h"
+#include "engine/engine.h"
+#include "engine/image.h"
+#include "engine/sound.h"
 #include "util.h"
 
 class App : public Engine {

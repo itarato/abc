@@ -2,9 +2,6 @@
 #include <time.h>
 
 #include "app.h"
-#include "image.h"
-#include "sound.h"
-#include "util.h"
 
 int main() {
   srand(time(NULL));

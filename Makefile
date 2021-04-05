@@ -2,7 +2,7 @@ CXX=clang++
 CXXFLAGS=`sdl2-config --cflags` -g -std=c++2a -Wall -pedantic
 BIN=main
 
-SRC=$(wildcard *.cpp)
+SRC=$(wildcard **/*.cpp *.cpp)
 OBJ=$(SRC:%.cpp=%.o)
 
 all: $(OBJ)
