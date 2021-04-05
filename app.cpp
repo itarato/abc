@@ -30,7 +30,11 @@ void App::handle_input() {
   }
 }
 
-void App::prepare_scene() {
+void App::prepare_stage() {
+  if (state == STATE_WON_GAME) {
+    victory_sound->play();
+  }
+
   SDL_SetRenderDrawColor(renderer, 42, 42, 42, 255);
   SDL_RenderClear(renderer);
 
@@ -41,8 +45,6 @@ void App::prepare_scene() {
 
   if (state == STATE_WON_GAME) {
     draw_image(SDL_Rect{0, 0, WIN_WIDTH, WIN_HEIGHT}, celebration_image->text);
-
-    victory_sound->play();
   }
 
   SDL_Color text_color;
@@ -65,7 +67,16 @@ void App::prepare_scene() {
             TEXT_ALIGN_CENTER, SDL_COLOR_BLACK, names[answer_char - 'A']);
 }
 
-void App::present_scene() { SDL_RenderPresent(renderer); }
+void App::draw_stage() {
+  SDL_RenderPresent(renderer);
+
+  if (state == STATE_WON_GAME) {
+    SDL_Delay(2000);
+    new_game();
+  } else {
+    SDL_Delay(16);
+  }
+}
 
 App::App()
     : win(nullptr), renderer(nullptr), font(nullptr), state(STATE_NORMAL) {}
@@ -127,15 +138,8 @@ void App::new_game() {
 void App::run() {
   while (state != STATE_EXIT) {
     handle_input();
-    prepare_scene();
-    present_scene();
-
-    if (state == STATE_WON_GAME) {
-      new_game();
-      SDL_Delay(2000);
-    }
-
-    SDL_Delay(16);
+    prepare_stage();
+    draw_stage();
   }
 }
 

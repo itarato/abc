@@ -22,8 +22,8 @@ class App {
   int state;
 
   void handle_input();
-  void prepare_scene();
-  void present_scene();
+  void prepare_stage();
+  void draw_stage();
 
  public:
   App();
