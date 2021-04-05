@@ -38,13 +38,12 @@ void App::prepare_stage() {
   SDL_SetRenderDrawColor(renderer, 42, 42, 42, 255);
   SDL_RenderClear(renderer);
 
-  draw_image(SDL_Rect{0, 0, WIN_WIDTH / 3, WIN_HEIGHT},
-             animal_image_textures[answer_char - LETTER_FIRST]->text);
+  draw_image({0, 0}, animal_image_textures[answer_char - LETTER_FIRST]);
 
-  draw_image(SDL_Rect{0, 0, WIN_WIDTH, WIN_HEIGHT}, overlay_image->text);
+  draw_image({0, 0}, overlay_image);
 
   if (state == STATE_WON_GAME) {
-    draw_image(SDL_Rect{0, 0, WIN_WIDTH, WIN_HEIGHT}, celebration_image->text);
+    draw_image({0, 0}, celebration_image);
   }
 
   SDL_Color text_color;
@@ -55,16 +54,16 @@ void App::prepare_stage() {
   }
 
   std::string pressed_char_string{pressed_char};
-  draw_text(SDL_Point{WIN_WIDTH - 96, 0}, 128, TEXT_ALIGN_CENTER,
-            SDL_COLOR_WHITE, pressed_char_string.c_str());
+  draw_text({WIN_WIDTH - 96, 0}, 128, TEXT_ALIGN_CENTER, SDL_COLOR_WHITE,
+            pressed_char_string.c_str());
 
   std::string answer_char_string{answer_char};
-  draw_text(SDL_Point{(int)(WIN_WIDTH / 3 * 2), -FONT_PADDING},
+  draw_text({(int)(WIN_WIDTH / 3 * 2), -FONT_PADDING},
             WIN_HEIGHT - FONT_PADDING, TEXT_ALIGN_CENTER, text_color,
             answer_char_string.c_str());
 
-  draw_text(SDL_Point{(int)(WIN_WIDTH / 3 * 2), WIN_HEIGHT - 96}, 64,
-            TEXT_ALIGN_CENTER, SDL_COLOR_BLACK, names[answer_char - 'A']);
+  draw_text({(int)(WIN_WIDTH / 3 * 2), WIN_HEIGHT - 96}, 64, TEXT_ALIGN_CENTER,
+            SDL_COLOR_BLACK, names[answer_char - 'A']);
 }
 
 void App::draw_stage() {
@@ -80,6 +79,7 @@ void App::draw_stage() {
 
 App::App()
     : win(nullptr), renderer(nullptr), font(nullptr), state(STATE_NORMAL) {}
+
 App::~App() {
   delete victory_sound;
 
@@ -176,6 +176,7 @@ void App::draw_text(SDL_Point pos, int height, int align, SDL_Color text_color,
   SDL_DestroyTexture(text);
 }
 
-void App::draw_image(SDL_Rect rect, SDL_Texture *text) {
-  SDL_RenderCopy(renderer, text, NULL, &rect);
+void App::draw_image(SDL_Point pos, Image *image) {
+  SDL_Rect rect{pos.x, pos.y, image->w, image->h};
+  SDL_RenderCopy(renderer, image->text, NULL, &rect);
 }

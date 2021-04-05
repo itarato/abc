@@ -9,6 +9,9 @@ void Image::init(SDL_Renderer *renderer, const char *file_name) {
   SDL_Surface *surf = load_surface(rwops);
   if (surf == nullptr) PANIC("Cannot load image");
 
+  w = surf->w;
+  h = surf->h;
+
   text = SDL_CreateTextureFromSurface(renderer, surf);
   SDL_FreeSurface(surf);
 }

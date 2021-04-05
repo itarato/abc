@@ -10,6 +10,8 @@ class Image {
   Image();
 
  public:
+  int w;
+  int h;
   SDL_Texture *text;
   void init(SDL_Renderer *renderer, const char *file_name);
   ~Image();

@@ -34,7 +34,7 @@ class App {
   void cleanup();
   void draw_text(SDL_Point pos, int height, int align, SDL_Color text_color,
                  const char *msg);
-  void draw_image(SDL_Rect rect, SDL_Texture *text);
+  void draw_image(SDL_Point pos, Image *image);
 };
 
 #endif
