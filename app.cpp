@@ -11,7 +11,7 @@ void App::handle_input() {
 
     switch (e.type) {
       case SDL_QUIT:
-        state = STATE_EXIT;
+        should_finish = true;
         break;
       case SDL_KEYDOWN:
         if (scancode >= SDL_SCANCODE_A && scancode <= SDL_SCANCODE_Z) {
@@ -21,7 +21,7 @@ void App::handle_input() {
             state = STATE_WON_GAME;
           }
         } else if (scancode == SDL_SCANCODE_ESCAPE) {
-          state = STATE_EXIT;
+          should_finish = true;
         }
         break;
       default:
@@ -67,7 +67,7 @@ void App::prepare_stage() {
 }
 
 void App::draw_stage() {
-  SDL_RenderPresent(renderer);
+  Engine::draw_stage();
 
   if (state == STATE_WON_GAME) {
     SDL_Delay(2000);
@@ -77,8 +77,7 @@ void App::draw_stage() {
   }
 }
 
-App::App()
-    : win(nullptr), renderer(nullptr), font(nullptr), state(STATE_NORMAL) {}
+App::App() : Engine("Lennox University"), state(STATE_NORMAL) {}
 
 App::~App() {
   delete victory_sound;
@@ -91,24 +90,7 @@ App::~App() {
 }
 
 void App::init() {
-  if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) != 0) PANIC("SDL Init Error");
-  if (TTF_Init() == -1) PANIC("TTF_Init failed");
-
-  int img_flags = IMG_INIT_JPG | IMG_INIT_PNG;
-  if ((IMG_Init(img_flags) & img_flags) != img_flags) PANIC("IMG_Init failed");
-
-  win = SDL_CreateWindow("Lennox University", SDL_WINDOWPOS_CENTERED,
-                         SDL_WINDOWPOS_CENTERED, WIN_WIDTH, WIN_HEIGHT,
-                         SDL_WIN_FLAGS);
-
-  if (win == nullptr) PANIC("Window creation error");
-
-  renderer = SDL_CreateRenderer(win, -1, SDL_RENDER_FLAGS);
-
-  if (renderer == nullptr) PANIC("Renderer creation error");
-
-  font = TTF_OpenFont("fonts/Ubuntu-Bold.ttf", 256);
-  if (font == nullptr) PANIC("Cannot open font");
+  Engine::init();
 
   for (int i = LETTER_FIRST; i <= LETTER_LAST; i++) {
     char image_name[32];
@@ -135,14 +117,6 @@ void App::new_game() {
   state = STATE_NORMAL;
 }
 
-void App::run() {
-  while (state != STATE_EXIT) {
-    handle_input();
-    prepare_stage();
-    draw_stage();
-  }
-}
-
 void App::cleanup() {
   TTF_CloseFont(font);
   TTF_Quit();
@@ -152,31 +126,4 @@ void App::cleanup() {
   SDL_DestroyRenderer(renderer);
   SDL_DestroyWindow(win);
   SDL_Quit();
-}
-
-void App::draw_text(SDL_Point pos, int height, int align, SDL_Color text_color,
-                    const char *msg) {
-  SDL_Surface *text_surface = TTF_RenderText_Solid(font, msg, text_color);
-  if (text_surface == nullptr) PANIC("Cannot render text");
-
-  int optimal_w;
-  int optimal_h;
-  if (TTF_SizeText(font, msg, &optimal_w, &optimal_h) == -1)
-    PANIC("Cannot check text size");
-
-  SDL_Texture *text = SDL_CreateTextureFromSurface(renderer, text_surface);
-  // Prepare with align-left, adjust later.
-  SDL_Rect final_rect{pos.x, pos.y, (int)((height * optimal_w) / optimal_h),
-                      height};
-
-  if (align == TEXT_ALIGN_CENTER) final_rect.x -= (final_rect.w >> 1);
-
-  SDL_RenderCopy(renderer, text, NULL, &final_rect);
-  SDL_FreeSurface(text_surface);
-  SDL_DestroyTexture(text);
-}
-
-void App::draw_image(SDL_Point pos, Image *image) {
-  SDL_Rect rect{pos.x, pos.y, image->w, image->h};
-  SDL_RenderCopy(renderer, image->text, NULL, &rect);
 }

@@ -4,15 +4,13 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 
+#include "engine.h"
 #include "image.h"
 #include "sound.h"
 #include "util.h"
 
-class App {
+class App : public Engine {
  private:
-  SDL_Window *win;
-  SDL_Renderer *renderer;
-  TTF_Font *font;
   char pressed_char;
   char answer_char;
   JPGImage *animal_image_textures[ABC_LEN];
@@ -30,11 +28,7 @@ class App {
   ~App();
   void init();
   void new_game();
-  void run();
   void cleanup();
-  void draw_text(SDL_Point pos, int height, int align, SDL_Color text_color,
-                 const char *msg);
-  void draw_image(SDL_Point pos, Image *image);
 };
 
 #endif

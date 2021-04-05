@@ -25,9 +25,6 @@
 #define ABC_LEN (LETTER_LAST - LETTER_FIRST + 1)
 #define FONT_PADDING 64
 
-#define TEXT_ALIGN_CENTER 0
-#define TEXT_ALIGN_LEFT 1
-
 static const char *names[] = {
     "Antelope", "Bumble bee",   "Cat",     "Dog",     "Elephant", "Fox",
     "Gorilla",  "Hippopotamus", "Iguana",  "Jaguar",  "Koala",    "Lemur",
