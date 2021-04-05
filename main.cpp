@@ -9,6 +9,10 @@
 #include <iostream>
 #include <string>
 
+#include "image.h"
+#include "sound.h"
+#include "util.h"
+
 #define STATE_NORMAL 0
 #define STATE_EXIT 1
 #define STATE_WON_GAME 2
@@ -32,12 +36,6 @@
 #define TEXT_ALIGN_CENTER 0
 #define TEXT_ALIGN_LEFT 1
 
-#define PANIC(s)        \
-  {                     \
-    cerr << s << endl;  \
-    exit(EXIT_FAILURE); \
-  }
-
 static const char *names[] = {
     "Antelope", "Bumble bee",   "Cat",     "Dog",     "Elephant", "Fox",
     "Gorilla",  "Hippopotamus", "Iguana",  "Jaguar",  "Koala",    "Lemur",
@@ -50,71 +48,6 @@ using namespace std;
 char rand_char() {
   return LETTER_FIRST + rand() % (LETTER_LAST - LETTER_FIRST + 1);
 }
-
-class SoundEffect {
- private:
-  SDL_AudioSpec wav_spec;
-  Uint32 wav_length;
-  Uint8 *wav_buffer;
-  SDL_AudioDeviceID device_id;
-
- public:
-  SoundEffect(const char *effect_file_name) {
-    if (!SDL_LoadWAV(effect_file_name, &wav_spec, &wav_buffer, &wav_length))
-      PANIC("Cannot load wav");
-
-    device_id = SDL_OpenAudioDevice(NULL, 0, &wav_spec, NULL, 0);
-    if (!device_id) PANIC("Cannot open audio device");
-  }
-
-  ~SoundEffect() {
-    SDL_CloseAudioDevice(device_id);
-    SDL_FreeWAV(wav_buffer);
-  }
-
-  void play() {
-    stop();
-    if (SDL_QueueAudio(device_id, wav_buffer, wav_length) == -1)
-      PANIC("Cannot queue audio");
-
-    SDL_PauseAudioDevice(device_id, 0);
-  }
-
-  void stop() { SDL_ClearQueuedAudio(device_id); }
-};
-
-class Image {
- protected:
-  virtual SDL_Surface *load_surface(SDL_RWops *rwops) = 0;
-
-  Image() : text(nullptr) {}
-
- public:
-  SDL_Texture *text;
-
-  void init(SDL_Renderer *renderer, const char *file_name) {
-    SDL_RWops *rwops = SDL_RWFromFile(file_name, "rb");
-    SDL_Surface *surf = load_surface(rwops);
-    if (surf == nullptr) PANIC("Cannot load image");
-
-    text = SDL_CreateTextureFromSurface(renderer, surf);
-    SDL_FreeSurface(surf);
-  }
-
-  ~Image() {
-    if (text) SDL_DestroyTexture(text);
-  }
-};
-
-class JPGImage final : public Image {
- protected:
-  SDL_Surface *load_surface(SDL_RWops *rwops) { return IMG_LoadJPG_RW(rwops); }
-};
-
-class PNGImage final : public Image {
- protected:
-  SDL_Surface *load_surface(SDL_RWops *rwops) { return IMG_LoadPNG_RW(rwops); }
-};
 
 class App {
  private:
@@ -187,7 +120,6 @@ class App {
               WIN_HEIGHT - FONT_PADDING, TEXT_ALIGN_CENTER, text_color,
               answer_char_string.c_str());
 
-    int name_len = strlen(names[answer_char - 'A']);
     draw_text(SDL_Point{(int)(WIN_WIDTH / 3 * 2), WIN_HEIGHT - 96}, 64,
               TEXT_ALIGN_CENTER, SDL_COLOR_BLACK, names[answer_char - 'A']);
   }
