@@ -11,7 +11,7 @@ void App::handle_input() {
 
     switch (e.type) {
       case SDL_QUIT:
-        should_finish = true;
+        exit_next_frame();
         break;
       case SDL_KEYDOWN:
         if (scancode >= SDL_SCANCODE_A && scancode <= SDL_SCANCODE_Z) {
@@ -21,7 +21,7 @@ void App::handle_input() {
             state = STATE_WON_GAME;
           }
         } else if (scancode == SDL_SCANCODE_ESCAPE) {
-          should_finish = true;
+          exit_next_frame();
         }
         break;
       default:
@@ -77,7 +77,9 @@ void App::draw_stage() {
   }
 }
 
-App::App() : Engine("Lennox University"), state(STATE_NORMAL) {}
+App::App()
+    : Engine("Lennox University", "fonts/Ubuntu-Bold.ttf", {1800, 600}),
+      state(STATE_NORMAL) {}
 
 App::~App() {
   delete victory_sound;

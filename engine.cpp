@@ -6,12 +6,14 @@
 
 void Engine::draw_stage() { SDL_RenderPresent(renderer); }
 
-Engine::Engine(const char *title)
+Engine::Engine(const char *title, const char *font_path, SDL_Point win_size)
     : win(nullptr),
       renderer(nullptr),
       font(nullptr),
       title(title),
-      should_finish(false) {}
+      should_finish(false),
+      font_path(font_path),
+      win_size(win_size) {}
 
 Engine::~Engine() {}
 
@@ -23,7 +25,7 @@ void Engine::init() {
   if ((IMG_Init(img_flags) & img_flags) != img_flags) PANIC("IMG_Init failed");
 
   win = SDL_CreateWindow("Lennox University", SDL_WINDOWPOS_CENTERED,
-                         SDL_WINDOWPOS_CENTERED, WIN_WIDTH, WIN_HEIGHT,
+                         SDL_WINDOWPOS_CENTERED, win_size.x, win_size.y,
                          SDL_WIN_FLAGS);
 
   if (win == nullptr) PANIC("Window creation error");
@@ -32,7 +34,7 @@ void Engine::init() {
 
   if (renderer == nullptr) PANIC("Renderer creation error");
 
-  font = TTF_OpenFont("fonts/Ubuntu-Bold.ttf", 256);
+  font = TTF_OpenFont(font_path, 256);
   if (font == nullptr) PANIC("Cannot open font");
 }
 
@@ -81,3 +83,5 @@ void Engine::draw_image(SDL_Point pos, Image *image) {
   SDL_Rect rect{pos.x, pos.y, image->w, image->h};
   SDL_RenderCopy(renderer, image->text, NULL, &rect);
 }
+
+void Engine::exit_next_frame() { should_finish = true; }

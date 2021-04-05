@@ -15,17 +15,19 @@ class Engine {
  protected:
   SDL_Window *win;
   SDL_Renderer *renderer;
-  // Make more fonts.
   TTF_Font *font;
   const char *title;
   bool should_finish;
+  const char *font_path;
+  SDL_Point win_size;
 
   virtual void handle_input() = 0;
   virtual void prepare_stage() = 0;
   virtual void draw_stage();
+  void exit_next_frame();
 
  public:
-  Engine(const char *title);
+  Engine(const char *title, const char *font_path, SDL_Point win_size);
   virtual ~Engine();
   virtual void init();
   void run();
