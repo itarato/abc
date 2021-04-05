@@ -29,6 +29,9 @@
 #define ABC_LEN (LETTER_LAST - LETTER_FIRST + 1)
 #define FONT_PADDING 64
 
+#define TEXT_ALIGN_CENTER 0
+#define TEXT_ALIGN_LEFT 1
+
 #define PANIC(s)        \
   {                     \
     cerr << s << endl;  \
@@ -176,18 +179,17 @@ class App {
     }
 
     string pressed_char_string{pressed_char};
-    draw_text(SDL_Point{WIN_WIDTH - 128, 0}, 128, SDL_COLOR_WHITE,
-              pressed_char_string.c_str());
+    draw_text(SDL_Point{WIN_WIDTH - 96, 0}, 128, TEXT_ALIGN_CENTER,
+              SDL_COLOR_WHITE, pressed_char_string.c_str());
 
     string answer_char_string{answer_char};
-    draw_text(
-        SDL_Point{(int)(WIN_WIDTH / 3 * 1.5) + FONT_PADDING, -FONT_PADDING},
-        WIN_HEIGHT - FONT_PADDING, text_color, answer_char_string.c_str());
+    draw_text(SDL_Point{(int)(WIN_WIDTH / 3 * 2), -FONT_PADDING},
+              WIN_HEIGHT - FONT_PADDING, TEXT_ALIGN_CENTER, text_color,
+              answer_char_string.c_str());
 
     int name_len = strlen(names[answer_char - 'A']);
-    draw_text(
-        SDL_Point{(int)(WIN_WIDTH / 3 * 2) - (name_len * 32), WIN_HEIGHT - 96},
-        64, SDL_COLOR_BLACK, names[answer_char - 'A']);
+    draw_text(SDL_Point{(int)(WIN_WIDTH / 3 * 2), WIN_HEIGHT - 96}, 64,
+              TEXT_ALIGN_CENTER, SDL_COLOR_BLACK, names[answer_char - 'A']);
   }
 
   void present_scene() { SDL_RenderPresent(renderer); }
@@ -222,7 +224,7 @@ class App {
 
     if (renderer == nullptr) PANIC("Renderer creation error");
 
-    font = TTF_OpenFont("fonts/Ubuntu-Bold.ttf", 600);
+    font = TTF_OpenFont("fonts/Ubuntu-Bold.ttf", 256);
     if (font == nullptr) PANIC("Cannot open font");
 
     for (int i = LETTER_FIRST; i <= LETTER_LAST; i++) {
@@ -276,7 +278,7 @@ class App {
     SDL_Quit();
   }
 
-  void draw_text(SDL_Point pos, int height, SDL_Color text_color,
+  void draw_text(SDL_Point pos, int height, int align, SDL_Color text_color,
                  const char *msg) {
     SDL_Surface *text_surface = TTF_RenderText_Solid(font, msg, text_color);
     if (text_surface == nullptr) PANIC("Cannot render text");
@@ -287,8 +289,12 @@ class App {
       PANIC("Cannot check text size");
 
     SDL_Texture *text = SDL_CreateTextureFromSurface(renderer, text_surface);
+    // Prepare with align-left, adjust later.
     SDL_Rect final_rect{pos.x, pos.y, (int)((height * optimal_w) / optimal_h),
                         height};
+
+    if (align == TEXT_ALIGN_CENTER) final_rect.x -= (final_rect.w >> 1);
+
     SDL_RenderCopy(renderer, text, NULL, &final_rect);
     SDL_FreeSurface(text_surface);
     SDL_DestroyTexture(text);
