@@ -57,6 +57,8 @@ void App::prepare_stage() {
                 pressed_char_string.c_str());
 
   std::string answer_char_string{answer_char};
+  answer_char_string.push_back(' ');
+  answer_char_string.push_back(answer_char | 0x20);
   draw_text_rel({2.0 / 3.0, 0.0}, 0.7, TEXT_ALIGN_CENTER, text_color,
                 answer_char_string.c_str());
 
@@ -115,6 +117,15 @@ void App::init() {
 
 void App::new_game() {
   pressed_char = ' ';
-  answer_char = rand_char();
+
+  char candidate;
+
+  for (;;) {
+    candidate = rand_char();
+    if (answer_char != candidate) break;
+  }
+
+  answer_char = candidate;
+
   state = STATE_NORMAL;
 }
