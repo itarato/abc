@@ -14,3 +14,4 @@ all: $(OBJ)
 clean:
 	rm -f *.o
 	rm -f ./$(BIN)
+	rm -f engine/*.o
